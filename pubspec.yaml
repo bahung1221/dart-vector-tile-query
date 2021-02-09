@@ -1,0 +1,11 @@
+name: vector_tile_query
+version: 0.0.1
+description: >-
+  A simple Dart package to query Mapbox Vector Tile.
+homepage: https://github.com/saigontek/dart-vector-tile-query
+documentation: https://github.com/saigontek/dart-vector-tile-query
+environment:
+  sdk: '>=2.7.0 <3.0.0'
+dependencies:
+  vector_tile: ^0.0.1
+  meta: ^1.2.4
