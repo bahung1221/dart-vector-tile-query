@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:meta/meta.dart';
 import 'package:vector_tile/vector_tile.dart';
-import 'package:vector_tile_query/util/util.dart' as util;
+import 'package:vector_tile_query/util/constant.dart';
+import 'package:vector_tile_query/util/distance.dart';
 
 export 'package:vector_tile/vector_tile.dart';
 
@@ -14,12 +16,14 @@ class ReverseQueryOption {
   int limit;
   List<String> layers;
   List<VectorTileGeomType> geometryTypes;
+  Unit unit;
 
   ReverseQueryOption({
-    this.radius = 0, // Direct hit
+    this.radius = 0, // Direct hit polygon (inside include edge)
     this.limit, // No limit
     this.layers, // All layers
     this.geometryTypes, // All geometry type
+    this.unit = Unit.Meters,
   });
 }
 
@@ -38,10 +42,12 @@ class QueryTile {
 }
 
 class QueryResultFeature {
-  GeoJson feature;
+  GeoJson geoJson;
+  VectorTileFeature feature;
   double distance;
 
   QueryResultFeature({
+    @required this.geoJson,
     @required this.feature,
     @required this.distance,
   });
@@ -73,26 +79,45 @@ List<QueryResultFeature> reverseQuery({
           z: queryTile.z
         );
 
-        // TODO: support more geojson type instead of only Point
-        if (!(geoJsonFeature is GeoJsonPoint)) {
-          return;
+        double distance = double.infinity;
+        if (geoJsonFeature is GeoJsonPoint) {
+          distance = pointToPointDistance(
+            from: point, 
+            to: geoJsonFeature.geometry.coordinates
+          );
         }
-
-        GeoJsonPoint geoJsonPointFeature = geoJsonFeature as GeoJsonPoint;
-        double distance = util.distance(from: point, to: geoJsonPointFeature.geometry.coordinates);
+        else {
+          distance = pointToLineOrPolygonDistance(
+            point: point, 
+            geoJson: geoJsonFeature,
+          );
+        }
 
         if (!_isValidDistance(distance: distance, radius: option.radius)) {
           return;
         }
 
         result.add(
-          QueryResultFeature(feature: geoJsonFeature, distance: distance)
+          QueryResultFeature(
+            geoJson: geoJsonFeature, 
+            feature: feature, 
+            distance: distance,
+          )
         );
       });
     });
   });
 
-  return result;
+  result.sort((a, b) {
+    if (a.distance > b.distance) return 1;
+    if (a.distance == b.distance) return 0;
+
+    return -1;
+  });
+
+  return option.limit == null 
+    ? result
+    : result.sublist(0, min(option.limit, result.length));
 }
 
 bool _isValidLayer({@required VectorTileLayer layer, @required List<String> queryLayers}) {
