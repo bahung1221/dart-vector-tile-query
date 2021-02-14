@@ -5,4 +5,5 @@ analyzer:
 
 linter:
   rules:
-      omit_local_variable_types: false
+    omit_local_variable_types: false
+    unnecessary_this: false
