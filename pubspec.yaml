@@ -1,7 +1,7 @@
 name: vector_tile_query
 version: 0.0.1
 description: >-
-  A simple Dart package to query Mapbox Vector Tile.
+  A Dart package to query reverse geocoding on vector tile protobuf files (mvt/pbf).
 homepage: https://github.com/saigontek/dart-vector-tile-query
 documentation: https://github.com/saigontek/dart-vector-tile-query
 environment:
