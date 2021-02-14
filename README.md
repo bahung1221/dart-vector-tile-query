@@ -4,7 +4,7 @@ Using vector tiles that were parsed by [dart-vector-tile](https://github.com/sai
 
 Features:
 - [x] Get a list of the features closest to a query point.
-- [x] Point in polygon checks (radius=0).
+- [x] Get polygons that contain a point (radius=0).
 
 
 ## Sample usage
@@ -59,7 +59,7 @@ class ResultItem {
 
 ## Example use cases:
 
-Reverse geocoding to find housenumber, road, suburb and city of a point by given a set of satisfy tiles:
+#### [Reverse geocoding](example/lib/main.dart) to find housenumber, road, suburb and city of a point by given a set of satisfy tiles:
 
 - **1)** Find set of specific zooms for specific feature level. ([OSM zoom levels](https://wiki.openstreetmap.org/wiki/Zoom_levels))
     + 14: housenumber, poi and road.
@@ -70,4 +70,7 @@ Reverse geocoding to find housenumber, road, suburb and city of a point by given
 
 - **3)** Run a set of query to find satisfy result :beer:
 
-[example code](example/lib/main.dart)
+------------------------------------
+
+#### Get polygons that contain a point:
+- Set `query radius` to `0`. see [example code](example/lib/main.dart)

@@ -36,6 +36,7 @@ void segmentEach({
           );
           if (stopFlg) return true;
 
+          previousCoord = coord;
           return false;
         }
       );

@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:meta/meta.dart';
 import 'package:vector_tile/vector_tile.dart';
-import 'package:vector_tile_query/util/constant.dart';
+import 'package:vector_tile_query/util/unit.dart';
 import 'package:vector_tile_query/util/distance.dart';
 
 export 'package:vector_tile/vector_tile.dart';
@@ -93,7 +93,13 @@ List<ResultItem> reverseQuery({
             unit: option.unit,
           );
         }
-        else {
+        else if (geoJsonFeature is GeoJsonPolygon || geoJsonFeature is GeoJsonMultiPolygon) {
+          distance = pointToPolygonDistance(
+            point: point, 
+            geoJson: geoJsonFeature,
+            unit: option.unit,
+          );
+        } else {
           distance = pointToLineOrPolygonDistance(
             point: point, 
             geoJson: geoJsonFeature,

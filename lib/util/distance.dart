@@ -1,27 +1,9 @@
 import 'dart:math';
 import 'package:meta/meta.dart';
 import 'package:vector_tile/util/geojson.dart';
-import 'package:vector_tile_query/util/constant.dart';
+import 'package:vector_tile_query/util/unit.dart';
+import 'package:vector_tile_query/util/polygon.dart';
 import 'package:vector_tile_query/util/segment.dart';
-
-/// Converts an angle in degrees to radians
-///
-/// @param degree: angle between 0 and 360 degrees
-/// @return angle in radians
-double degreeToRadian({@required double degree}) {
-  double radian = degree % 360;
-  return (radian * pi) / 180;
-}
-
-/// Convert a distance measurement (assuming a spherical Earth) from radians to a more friendly unit.
-/// 
-/// @param radian: in radians across the sphere
-/// @param unit: output unit
-/// 
-/// @return distance
-double radianToLength({@required double radian, Unit unit = Unit.Meters}) {
-  return factors[unit] * radian;
-}
 
 /// Calculates the distance between two points in degrees.
 /// This uses the [Haversine formula](http://en.wikipedia.org/wiki/Haversine_formula) to account for global curvature.
@@ -49,6 +31,25 @@ double pointToPointDistance({
     radian: 2 * atan2(sqrt(a), sqrt(1 - a)),
     unit: unit,
   );
+}
+
+/// Returns the minimum distance between a Point and a Polygon or MultiPolygon, 
+/// If the point is inside polygon, distance is 0, 
+/// Else use `pointToLineOrPolygonDistance` to calculate the distance.
+/// 
+/// @param point: point
+/// @param geoJson (Multi)LineString or (Multi)Polygon GeoJSON
+/// @returns {double} distance between point and line
+double pointToPolygonDistance({
+  @required List<double> point,
+  @required GeoJson geoJson,
+  Unit unit = Unit.Meters
+}) {
+  if (pointInPolygon(point: point, geoJson: geoJson)) {
+    return 0;
+  }
+
+  return pointToLineOrPolygonDistance(point: point, geoJson: geoJson, unit: unit);
 }
 
 /// Returns the minimum distance between a Point and a LineString or Polygon, 

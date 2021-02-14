@@ -1,6 +1,15 @@
 import 'package:vector_tile_query/vector_tile_query.dart';
 
-main() async {
+/// Reverse geocoding to find housenumber, road, suburb and city of a point by given a set of satisfy tiles
+/// - **1)** Find set of specific zooms for specific feature level. ([OSM zoom levels](https://wiki.openstreetmap.org/wiki/Zoom_levels))
+///    + 14: housenumber, poi and road.
+///    + 13: suburb.
+///    + 12: city
+///
+/// - **2)** Find map tile xy number from a lon/lat pair and above zoom: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Lon..2Flat._to_tile_numbers
+///
+/// - **3)** Run a set of query to find satisfy result :beer:
+void reverseGeocoding() async {
   List<QueryTile> houseTiles = [
     QueryTile(
       tile: await VectorTile.fromPath(path: '../data/14-13050-7695.pbf'),
@@ -174,4 +183,58 @@ main() async {
         });
       });
     });
+}
+
+
+void pointInPolygon() async {
+  List<QueryTile> tiles = [
+    QueryTile(
+      tile: await VectorTile.fromPath(path: '../data/12-3261-1920.pbf'),
+      x: 3261,
+      y: 1920,
+      z: 12,
+    ),
+    QueryTile(
+      tile: await VectorTile.fromPath(path: '../data/12-3261-1921.pbf'),
+      x: 3261,
+      y: 1921,
+      z: 12,
+    ),
+  ];
+
+  List<double> coordinate = [
+    106.63813,
+    11.10946,
+  ]; // lon - lat
+
+  ReverseQueryOption option = ReverseQueryOption(
+    radius: 0,
+    limit: 10,
+  );
+
+  var result = reverseQuery(point: coordinate, option: option, queryTiles: tiles);
+
+  result.forEach((queryResultFeature) {
+    print('id: ${queryResultFeature.feature.id}');
+    print('distance: ${queryResultFeature.distance}');
+    print('id: ${queryResultFeature.geoJson.geometry.type}');
+    queryResultFeature.geoJson.properties.forEach((property) {
+      property.forEach((key, value) {
+        if (value.intValue != 0) {
+          print(
+            'key: $key, value: ${value.intValue}'
+          );
+        } else {
+          print(
+            'key: $key, value: ${value.stringValue}'
+          );
+        }
+      });
+    });
+  });
+}
+
+main() {
+  reverseGeocoding();  
+  // pointInPolygon();
 }
