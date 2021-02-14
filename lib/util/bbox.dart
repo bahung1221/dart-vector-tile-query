@@ -32,14 +32,7 @@ List<double> getbbox({@required GeoJson geoJson}) {
   return bbox;
 }
 
-/**
- * inBBox
- *
- * @private
- * @param {Position} pt point [x,y]
- * @param {BBox} bbox BBox [west, south, east, north]
- * @returns {boolean} true/false if point is inside BBox
- */
+/// Check a point is inside bbox
 bool pointInBBox({@required List<double> point, @required List<double> bbox}) {
   return (
     bbox[0] <= point[0] && 
