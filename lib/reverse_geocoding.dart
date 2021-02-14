@@ -14,12 +14,14 @@ export 'package:vector_tile/vector_tile.dart';
 class ReverseQueryOption {
   double radius;
   int limit;
+  bool dedupe;
   List<String> layers;
   List<VectorTileGeomType> geometryTypes;
   Unit unit;
 
   ReverseQueryOption({
     this.radius = 0, // Direct hit polygon (inside include edge)
+    this.dedupe = true, // No limit
     this.limit, // No limit
     this.layers, // All layers
     this.geometryTypes, // All geometry type
@@ -41,12 +43,12 @@ class QueryTile {
   });
 }
 
-class QueryResultFeature {
+class ResultItem {
   GeoJson geoJson;
   VectorTileFeature feature;
   double distance;
 
-  QueryResultFeature({
+  ResultItem({
     @required this.geoJson,
     @required this.feature,
     @required this.distance,
@@ -55,12 +57,12 @@ class QueryResultFeature {
 
 /// Reverse geocoding query
 ///
-List<QueryResultFeature> reverseQuery({
+List<ResultItem> reverseQuery({
   @required List<double> point,
   @required List<QueryTile> queryTiles,
   @required ReverseQueryOption option,
 }) {
-  List<QueryResultFeature> result = [];
+  List<ResultItem> result = [];
   
   queryTiles.forEach((queryTile) {
     queryTile.tile.layers.forEach((layer) {
@@ -97,13 +99,16 @@ List<QueryResultFeature> reverseQuery({
           return;
         }
 
-        result.add(
-          QueryResultFeature(
-            geoJson: geoJsonFeature, 
-            feature: feature, 
-            distance: distance,
-          )
+        ResultItem newItem = ResultItem(
+          geoJson: geoJsonFeature, 
+          feature: feature, 
+          distance: distance,
         );
+        if (option.dedupe && _isDuplicated(curList: result, newItem: newItem)) {
+          return;
+        }
+
+        result.add(newItem);
       });
     });
   });
@@ -144,4 +149,13 @@ bool _isValidDistance({
   @required double radius,
 }) {
   return distance <= radius;
+}
+
+bool _isDuplicated({
+  @required List<ResultItem> curList,
+  @required ResultItem newItem,
+}) {
+  return curList.any((curItem) {
+    return curItem.feature.id == newItem.feature.id;
+  });
 }
