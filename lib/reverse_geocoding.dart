@@ -6,15 +6,18 @@ import 'package:vector_tile_query/util/distance.dart';
 
 export 'package:vector_tile/vector_tile.dart';
 
-/// Query Options
-/// - radius = 0: Direct hit
-/// - layers = null: Query in all layers
-/// - geometryType = null: Query all geometryType
-/// - limit = null: No limit
+/// Query Options for reverse geocoding
+/// 
+/// @param radius: the radius to query for features, default is 0 (direct hit only)
+/// @param limit: limit the number of result items, default is get all
+/// @param dedupe: filter duplicated items, default is true
+/// @param layers: query in specifics layers, default is all layers
+/// @param geometryTypes: query in specifics layers, default is all geometryTypes
+/// @param unit: response unit, default is meters
 class ReverseQueryOption {
   double radius;
-  int limit;
   bool dedupe;
+  int limit;
   List<String> layers;
   List<VectorTileGeomType> geometryTypes;
   Unit unit;
@@ -55,8 +58,9 @@ class ResultItem {
   });
 }
 
-/// Reverse geocoding query
+/// Excute reverse geocoding query
 ///
+/// @return list of satisfy items (feature, geojson & distance)
 List<ResultItem> reverseQuery({
   @required List<double> point,
   @required List<QueryTile> queryTiles,
@@ -85,13 +89,15 @@ List<ResultItem> reverseQuery({
         if (geoJsonFeature is GeoJsonPoint) {
           distance = pointToPointDistance(
             from: point, 
-            to: geoJsonFeature.geometry.coordinates
+            to: geoJsonFeature.geometry.coordinates,
+            unit: option.unit,
           );
         }
         else {
           distance = pointToLineOrPolygonDistance(
             point: point, 
             geoJson: geoJsonFeature,
+            unit: option.unit,
           );
         }
 
@@ -104,11 +110,12 @@ List<ResultItem> reverseQuery({
           feature: feature, 
           distance: distance,
         );
-        if (option.dedupe && _isDuplicated(curList: result, newItem: newItem)) {
-          return;
-        }
 
-        result.add(newItem);
+        result = _dedupeAndPush(
+          curList: result,
+          newItem: newItem,
+          dedupe: option.dedupe,
+        );
       });
     });
   });
@@ -125,6 +132,7 @@ List<ResultItem> reverseQuery({
     : result.sublist(0, min(option.limit, result.length));
 }
 
+/// Check if given layer was specified in query layers or not
 bool _isValidLayer({@required VectorTileLayer layer, @required List<String> queryLayers}) {
   if (queryLayers == null) {
     return true;
@@ -133,6 +141,7 @@ bool _isValidLayer({@required VectorTileLayer layer, @required List<String> quer
   return queryLayers.any((queryLayer) => queryLayer == layer.name );
 }
 
+/// Check if given geomType was specified in query geomTypes or not
 bool _isValidGeomType({
   @required VectorTileFeature feature, 
   @required List<VectorTileGeomType> queryGeomTypes
@@ -144,6 +153,7 @@ bool _isValidGeomType({
   return queryGeomTypes.any((queryGeomType) => queryGeomType == feature.type);
 }
 
+/// Check if given distance is within query radius or not
 bool _isValidDistance({
   @required double distance, 
   @required double radius,
@@ -151,11 +161,23 @@ bool _isValidDistance({
   return distance <= radius;
 }
 
-bool _isDuplicated({
+/// Dedupe if needed and then push the new item to result list
+List<ResultItem> _dedupeAndPush({
   @required List<ResultItem> curList,
   @required ResultItem newItem,
+  @required bool dedupe,
 }) {
-  return curList.any((curItem) {
+  int duplicatedIndex = curList.indexWhere((curItem) {
     return curItem.feature.id == newItem.feature.id;
   });
+
+  if (dedupe && duplicatedIndex >= 0) {
+    if (newItem.distance < curList[duplicatedIndex].distance) {
+      curList[duplicatedIndex] = newItem;
+    }
+  } else {
+    curList.add(newItem);
+  }
+
+  return curList;
 }

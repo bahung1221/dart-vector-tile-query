@@ -1,7 +1,7 @@
 import 'package:vector_tile_query/vector_tile_query.dart';
 
 main() async {
-  List<QueryTile> queryTiles = [
+  List<QueryTile> houseTiles = [
     QueryTile(
       tile: await VectorTile.fromPath(path: '../data/14-13050-7695.pbf'),
       x: 13050,
@@ -56,7 +56,7 @@ main() async {
     106.75985276699066,
     10.844338677301536
   ]; // lon - lat
-  ReverseQueryOption option = ReverseQueryOption(
+  ReverseQueryOption houseOption = ReverseQueryOption(
     radius: 20, // 20 meters
     limit: 10,
     geometryTypes: [VectorTileGeomType.POINT],
@@ -79,13 +79,16 @@ main() async {
     layers: ['place'],
   );
 
-  var result = reverseQuery(point: coordinate, option: option, queryTiles: queryTiles);
-  var resultRoad = reverseQuery(point: coordinate, option: optionRoad, queryTiles: queryTiles);
+  var result = reverseQuery(point: coordinate, option: houseOption, queryTiles: houseTiles);
+  var resultRoad = reverseQuery(point: coordinate, option: optionRoad, queryTiles: houseTiles);
   var resultSuburb = reverseQuery(point: coordinate, option: optionsSuburb, queryTiles: suburbTiles);
   var resultCity = reverseQuery(point: coordinate, option: optionsCity, queryTiles: cityTiles);
 
-  print('=========');
+  print('=========POI OF GIVEN COORDINATE=========');
+  print('\n');
   result.forEach((queryResultFeature) {
+    print('id: ${queryResultFeature.feature.id}');
+    print('distance: ${queryResultFeature.distance}');
     queryResultFeature.geoJson.properties.forEach((property) {
       property.forEach((key, value) {
         if (value.intValue != 0) {
@@ -99,13 +102,13 @@ main() async {
         }
       });
     });
-    print('latlon: ${(queryResultFeature.feature.geometry as GeometryPoint).coordinates}');
-    print('id: ${queryResultFeature.feature.id}');
-    print('distance: ${queryResultFeature.distance}');
   });
   
-  print('=========Road');
+  print('\n\n');
+  print('=========ROAD OF GIVEN COORDINATE=========');
   resultRoad.forEach((queryResultFeature) {
+    print('id: ${queryResultFeature.feature.id}');
+    print('distance: ${queryResultFeature.distance}');
     queryResultFeature.geoJson.properties.forEach((property) {
       property.forEach((key, value) {
         if (value.intValue != 0) {
@@ -119,13 +122,14 @@ main() async {
         }
       });
     });
-    print('latlon: ${(queryResultFeature.feature.geometry as GeometryLineString).coordinates}');
-    print('id: ${queryResultFeature.feature.id}');
-    print('distance: ${queryResultFeature.distance}');
   });
 
-  print('=========Suburb');
+  print('\n\n');
+  print('=========SUBURB OF GIVEN COORDINATE=========');
+  print('\n');
   resultSuburb.forEach((queryResultFeature) {
+    print('id: ${queryResultFeature.feature.id}');
+    print('distance: ${queryResultFeature.distance}');
     queryResultFeature.geoJson.properties.forEach((property) {
       property.forEach((key, value) {
         if (value.intValue != 0) {
@@ -139,12 +143,11 @@ main() async {
         }
       });
     });
-    print('latlon: ${(queryResultFeature.feature.geometry as GeometryPoint).coordinates}');
-    print('id: ${queryResultFeature.feature.id}');
-    print('distance: ${queryResultFeature.distance}');
   });
 
-  print('=========CITY');
+  print('\n\n');
+  print('=========CITY OF GIVEN COORDINATE=========');
+  print('\n');
   resultCity
     .where((queryResultFeature) {
       return queryResultFeature.geoJson.properties.any((property) {
@@ -155,6 +158,8 @@ main() async {
       });
     })
     .forEach((queryResultFeature) {
+      print('id: ${queryResultFeature.feature.id}');
+      print('distance: ${queryResultFeature.distance}');
       queryResultFeature.geoJson.properties.forEach((property) {
         property.forEach((key, value) {
           if (value.intValue != 0) {
@@ -168,9 +173,5 @@ main() async {
           }
         });
       });
-      print('latlon: ${(queryResultFeature.feature.geometry as GeometryPoint).coordinates}');
-      print('latlon: ${(queryResultFeature.feature.geometry as GeometryPoint).type}');
-      print('id: ${queryResultFeature.feature.id}');
-      print('distance: ${queryResultFeature.distance}');
     });
 }

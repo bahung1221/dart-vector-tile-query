@@ -68,7 +68,11 @@ double pointToLineOrPolygonDistance({
   segmentEach(
     geoJson: geoJson,
     callback: ({List<List<double>> segment}) {
-      double curDistance = pointToSegmentDistance(point: point, segment: segment);
+      double curDistance = pointToSegmentDistance(
+        point: point,
+        segment: segment,
+        unit: unit
+      );
       if (curDistance < distance) {
         distance = curDistance;
       }
@@ -79,9 +83,14 @@ double pointToLineOrPolygonDistance({
   return distance;
 }
 
+/// A implementation of theory by Paul Bourke.
+/// https://stackoverflow.com/a/6853926/8127805
+/// 
+/// @returns the distance between a point P on a segment AB.
 double pointToSegmentDistance({
   @required List<double> point,
-  @required List<List<double>> segment
+  @required List<List<double>> segment,
+  Unit unit = Unit.Meters
 }) {
   if (segment.length != 2) return double.infinity;
 
@@ -104,7 +113,11 @@ double pointToSegmentDistance({
   double b2 = c1 / c2;
   List<double> pb = [a[0] + b2 * v[0], a[1] + b2 * v[1]];
 
-  return pointToPointDistance(from: point, to: pb);
+  return pointToPointDistance(
+    from: point, 
+    to: pb,
+    unit: unit,
+  );
 }
 
 double dot(List<double> u, List<double> v) {
